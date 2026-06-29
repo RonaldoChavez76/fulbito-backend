@@ -1,3 +1,8 @@
+/**
+ * Archivo: controllers/eventController.js
+ * Descripción: Controlador para la gestión de eventos de partidos,
+ *              incluyendo registro, consulta, edición y eliminación.
+ */
 const Event = require('../models/Event');
 const Match = require('../models/Match');
 

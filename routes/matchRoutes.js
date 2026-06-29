@@ -1,3 +1,7 @@
+/**
+ * Archivo: routes/matchRoutes.js
+ * Descripción: Define las rutas HTTP para operaciones de partidos.
+ */
 const express = require('express');
 const router = express.Router();
 const matchController = require('../controllers/matchController');

@@ -1,3 +1,8 @@
+/**
+ * Archivo: models/Player.js
+ * Descripción: Define el esquema de jugadores asociados a un partido,
+ *              con dorsal, nombre, equipo y marca de entrada manual.
+ */
 const mongoose = require('mongoose');
 
 const PlayerSchema = new mongoose.Schema({

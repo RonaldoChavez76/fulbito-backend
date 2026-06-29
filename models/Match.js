@@ -1,3 +1,10 @@
+
+
+/**
+ * Archivo: models/Match.js
+ * Descripción: Define el esquema de MongoDB para los partidos,
+ *              incluyendo equipos, marcador, estado del partido y tiempos.
+ */
 const mongoose = require('mongoose');
 
 const MatchSchema = new mongoose.Schema({

@@ -1,3 +1,8 @@
+/**
+ * Archivo: controllers/playerController.js
+ * Descripción: Controlador para operaciones de jugadores,
+ *              como listado por partido, creación, actualización y eliminación.
+ */
 const Player = require('../models/Player');
 
 // 1. Obtener todos los jugadores de un partido específico
