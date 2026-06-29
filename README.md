@@ -1,6 +1,16 @@
 # Fulbito Backend API
 
 Backend application for "Fulbito", built with Node.js, Express, and MongoDB. The API provides endpoints to manage football (soccer) matches, players, and in-game events like goals, yellow cards, and red cards.
+## Integrantes. 
+* Leonel Alejandro Torres Pérez
+* Santiago Ronaldo Chavez Piñón
+* César Fernando González Ávalos
+
+## Grupo
+* GIDS6093
+
+## Objetivo
+* Crear una aplicación para el sistema operativo wearOS el cuál sea capaz de hacer el registro de goles, tarjetas amarillas y rojas dentro de un partido de fútbol
 
 ##  Technologies
 
