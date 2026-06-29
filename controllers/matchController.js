@@ -1,3 +1,8 @@
+/**
+ * Archivo: controllers/matchController.js
+ * Descripción: Controlador para operaciones de partidos,
+ *              incluyendo creación, consulta, actualización y registro de eventos.
+ */
 const Match = require('../models/Match');
 const Player = require('../models/Player');
 const Event = require('../models/Event');

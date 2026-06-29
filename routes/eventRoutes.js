@@ -1,3 +1,7 @@
+/**
+ * Archivo: routes/eventRoutes.js
+ * Descripción: Define las rutas HTTP para operaciones de eventos de partido.
+ */
 const express = require('express');
 const router = express.Router();
 const eventController = require('../controllers/eventController');

@@ -1,3 +1,8 @@
+/**
+ * Archivo: index.js
+ * Descripción: Inicializa el servidor Express, configura la conexión a MongoDB,
+ *              habilita CORS y JSON parsing, y registra las rutas de la API.
+ */
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');

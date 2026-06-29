@@ -1,3 +1,8 @@
+/**
+ * Archivo: models/Event.js
+ * Descripción: Define el esquema de eventos de partido,
+ *              como goles y tarjetas, con referencia al partido y jugador.
+ */
 const mongoose = require('mongoose');
 
 const EventSchema = new mongoose.Schema({

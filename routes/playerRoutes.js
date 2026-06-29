@@ -1,3 +1,7 @@
+/**
+ * Archivo: routes/playerRoutes.js
+ * Descripción: Define las rutas HTTP para operaciones de jugadores.
+ */
 const express = require('express');
 const router = express.Router();
 const playerController = require('../controllers/playerController');
