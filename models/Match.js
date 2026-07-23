@@ -12,6 +12,7 @@ const MatchSchema = new mongoose.Schema({
   awayTeam: { type: String, required: true },
   homeTeamRef: { type: mongoose.Schema.Types.ObjectId, ref: 'Team', required: false },
   awayTeamRef: { type: mongoose.Schema.Types.ObjectId, ref: 'Team', required: false },
+  leagueRef: { type: mongoose.Schema.Types.ObjectId, ref: 'League', required: true },
   fecha: { type: String, default: '' },       // dd/MM/yyyy
   hora: { type: String, default: '' },         // HH:mm
   cancha: { type: String, default: '' },

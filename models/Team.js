@@ -5,6 +5,7 @@ const TeamSchema = new mongoose.Schema({
   category: { type: String, required: true, default: 'Mayor' },
   captain: { type: String, required: true },
   shieldUrl: { type: String, default: '' },
+  leagues: [{ type: mongoose.Schema.Types.ObjectId, ref: 'League' }],
   createdAt: { type: Date, default: Date.now }
 });
 

@@ -2,8 +2,14 @@ const Team = require('../models/Team');
 
 exports.createTeam = async (req, res) => {
   try {
-    const { name, category, captain, shieldUrl } = req.body;
-    const newTeam = new Team({ name, category, captain, shieldUrl });
+    const { name, category, captain, shieldUrl, leagues } = req.body;
+    const newTeam = new Team({ 
+      name, 
+      category, 
+      captain, 
+      shieldUrl, 
+      leagues: leagues || [] 
+    });
     await newTeam.save();
     res.status(201).json(newTeam);
   } catch (error) {
@@ -13,7 +19,12 @@ exports.createTeam = async (req, res) => {
 
 exports.getTeams = async (req, res) => {
   try {
-    const teams = await Team.find();
+    const { leagueId } = req.query;
+    let query = {};
+    if (leagueId) {
+      query.leagues = leagueId;
+    }
+    const teams = await Team.find(query);
     res.status(200).json(teams);
   } catch (error) {
     res.status(500).json({ error: error.message });

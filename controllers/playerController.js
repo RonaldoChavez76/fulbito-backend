@@ -4,6 +4,9 @@
  *              como listado por partido, creación, actualización y eliminación.
  */
 const Player = require('../models/Player');
+const User = require('../models/User');
+const bcrypt = require('bcryptjs');
+const Event = require('../models/Event');
 
 // 1. Obtener todos los jugadores de un partido específico
 exports.getPlayersByMatch = async (req, res) => {
@@ -140,5 +143,113 @@ exports.getTopScorers = async (req, res) => {
         res.json(formatScorers);
     } catch (error) {
         res.status(500).json({ message: "Error al obtener goleadores", error });
+    }
+};
+
+// 10. Generar cuenta de usuario para un jugador (Admin/Capitán)
+exports.generateAccount = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const player = await Player.findById(id);
+        
+        if (!player) {
+            return res.status(404).json({ message: "Jugador no encontrado" });
+        }
+
+        if (player.userId) {
+            return res.status(400).json({ message: "El jugador ya tiene una cuenta asociada" });
+        }
+
+        // Generar credenciales
+        const username = `jugador_${player.dorsal}_${Math.floor(Math.random() * 10000)}`;
+        const plainPassword = Math.random().toString(36).slice(-8); // Contraseña aleatoria de 8 caracteres
+
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(plainPassword, salt);
+
+        // Crear el usuario
+        const newUser = new User({
+            username,
+            password: hashedPassword,
+            role: 'Jugador'
+        });
+        const savedUser = await newUser.save();
+
+        // Actualizar el jugador
+        player.userId = savedUser._id;
+        await player.save();
+
+        res.status(201).json({
+            message: "Cuenta generada exitosamente",
+            credentials: {
+                username: username,
+                password: plainPassword // Se muestra solo esta vez
+            }
+        });
+    } catch (error) {
+        console.error("Error al generar cuenta:", error);
+        res.status(500).json({ message: "Error al generar cuenta", error: error.message });
+    }
+};
+
+// 11. Obtener estadísticas propias (Mis Stats)
+exports.getMyStats = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        
+        // Buscar todas las apariciones del jugador en diferentes partidos
+        const players = await Player.find({ userId });
+        
+        if (!players || players.length === 0) {
+            return res.json({
+                matchesPlayed: 0,
+                totalGoals: 0,
+                yellowCards: 0,
+                redCards: 0,
+                history: []
+            });
+        }
+
+        let totalGoals = 0;
+        let yellowCards = 0;
+        let redCards = 0;
+        const history = [];
+
+        for (const p of players) {
+            totalGoals += p.goals;
+
+            // Buscar eventos (tarjetas) para este jugador en este partido
+            const events = await Event.find({ 
+                matchId: p.matchId, 
+                teamId: p.teamId, 
+                playerDorsal: p.dorsal 
+            });
+
+            const matchYellows = events.filter(e => e.type.includes('YELLOW') || e.type.includes('AMARILLA')).length;
+            const matchReds = events.filter(e => e.type.includes('RED') || e.type.includes('ROJA')).length;
+
+            yellowCards += matchYellows;
+            redCards += matchReds;
+
+            history.push({
+                matchId: p.matchId,
+                teamId: p.teamId,
+                dorsal: p.dorsal,
+                goals: p.goals,
+                yellowCards: matchYellows,
+                redCards: matchReds
+            });
+        }
+
+        res.json({
+            matchesPlayed: players.length,
+            totalGoals,
+            yellowCards,
+            redCards,
+            history
+        });
+    } catch (error) {
+        console.error("Error al obtener mis stats:", error);
+        res.status(500).json({ message: "Error al obtener estadísticas", error: error.message });
     }
 };
