@@ -9,10 +9,13 @@ const playerController = require('../controllers/playerController');
 // Rutas base para jugadores
 router.post('/', playerController.createPlayer);
 router.post('/bulk', playerController.bulkCreatePlayers);
-router.post('/sync', playerController.syncManualPlayer);
+router.post('/sync-manual', playerController.syncManualPlayer);
+router.get('/top-scorers', playerController.getTopScorers); // Debe ir antes de /:id para no confundir
 
 // Rutas que requieren parámetros (ID)
+router.get('/', playerController.getAllPlayers);
 router.get('/match/:matchId', playerController.getPlayersByMatch);
+router.get('/team/:teamRef', playerController.getPlayersByTeam);
 router.put('/:id', playerController.updatePlayer);
 router.delete('/:id', playerController.deletePlayer);
 

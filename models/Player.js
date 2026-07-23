@@ -6,10 +6,14 @@
 const mongoose = require('mongoose');
 
 const PlayerSchema = new mongoose.Schema({
-  matchId: { type: mongoose.Schema.Types.ObjectId, ref: 'Match', required: true },
+  matchId: { type: mongoose.Schema.Types.ObjectId, ref: 'Match', required: false },
+  teamRef: { type: mongoose.Schema.Types.ObjectId, ref: 'Team', required: false }, // Para jugadores globales del equipo
   dorsal: { type: String, required: true },
   name: { type: String, default: "" },
-  teamId: { type: Number, enum: [0, 1], required: true }, // 0: Local, 1: Visita
+  position: { type: String, default: "Jugador" },
+  photoUrl: { type: String, default: "" },
+  goals: { type: Number, default: 0 },
+  teamId: { type: Number, enum: [0, 1], required: false },
   isManualEntry: { type: Boolean, default: false }
 });
 

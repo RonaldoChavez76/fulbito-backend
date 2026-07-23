@@ -9,7 +9,7 @@ const EventSchema = new mongoose.Schema({
   matchId: { type: mongoose.Schema.Types.ObjectId, ref: 'Match', required: true },
   type: { 
     type: String, 
-    enum: ['GOAL', 'YELLOW_CARD', 'RED_CARD'], 
+    enum: ['GOAL', 'YELLOW_CARD', 'RED_CARD', 'YELLOW', 'RED', 'AMARILLA', 'ROJA', 'GOL', 'TARJETA_AMARILLA', 'TARJETA_ROJA', 'TARJETA AMARILLA', 'TARJETA ROJA'], 
     required: true 
   },
   playerDorsal: { type: String, required: true },
