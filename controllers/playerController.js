@@ -65,10 +65,21 @@ exports.syncManualPlayer = async (req, res) => {
 // 5. Actualizar datos de un jugador
 exports.updatePlayer = async (req, res) => {
     try {
+        // Construir el objeto de actualización solo con los campos enviados (no borrar photoUrl si no viene)
+        const updateData = {};
+        const allowedFields = ['name', 'dorsal', 'position', 'teamRef', 'matchId', 'teamId', 'isManualEntry', 'goals'];
+        for (const field of allowedFields) {
+            if (req.body[field] !== undefined) updateData[field] = req.body[field];
+        }
+        // photoUrl solo se actualiza si viene explicitamente y no está vacío
+        if (req.body.photoUrl !== undefined && req.body.photoUrl !== '') {
+            updateData.photoUrl = req.body.photoUrl;
+        }
+        
         const updatedPlayer = await Player.findByIdAndUpdate(
             req.params.id,
-            req.body,
-            { new: true }
+            { $set: updateData },
+            { returnDocument: 'after' }
         );
         res.json(updatedPlayer);
     } catch (error) {
@@ -83,5 +94,51 @@ exports.deletePlayer = async (req, res) => {
         res.json({ message: "Jugador eliminado" });
     } catch (error) {
         res.status(500).json({ message: "Error al eliminar jugador", error });
+    }
+};
+
+// 7. Obtener todos los jugadores (Para Admin)
+exports.getAllPlayers = async (req, res) => {
+    try {
+        const players = await Player.find();
+        res.json(players);
+    } catch (error) {
+        res.status(500).json({ message: "Error al obtener jugadores", error });
+    }
+};
+
+// 8. Obtener jugadores por equipo
+exports.getPlayersByTeam = async (req, res) => {
+    try {
+        const { teamRef } = req.params;
+        const players = await Player.find({ teamRef });
+        res.json(players);
+    } catch (error) {
+        res.status(500).json({ message: "Error al obtener jugadores por equipo", error });
+    }
+};
+
+// 9. Tabla de goleo (Real)
+exports.getTopScorers = async (req, res) => {
+    try {
+        const topPlayers = await Player.find({ goals: { $gt: 0 } })
+            .sort({ goals: -1 })
+            .limit(10)
+            .populate('teamRef', 'name');
+
+        const formatScorers = topPlayers.map(p => ({
+            name: p.name || `Jugador #${p.dorsal}`,
+            team: p.teamRef ? p.teamRef.name : (p.teamId === 0 ? "Local" : "Visita"),
+            goals: p.goals
+        }));
+        
+        // Si no hay ninguno, devolver un array vacío
+        if (formatScorers.length === 0) {
+            return res.json([]);
+        }
+
+        res.json(formatScorers);
+    } catch (error) {
+        res.status(500).json({ message: "Error al obtener goleadores", error });
     }
 };

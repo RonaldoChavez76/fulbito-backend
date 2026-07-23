@@ -8,31 +8,73 @@ const Match = require('../models/Match');
 
 // 1. Registrar un nuevo evento (Gol, Amarilla o Roja)
 exports.registerEvent = async (req, res) => {
-    try {
-        const { matchId, type, playerDorsal, teamId, timestampSeconds, period } = req.body;
+  try {
+    console.log("\n--- NUEVO EVENTO RECIBIDO DESDE EL RELOJ (vía eventController) ---");
+    console.log(req.body);
+    
+    const { matchId, type, teamId } = req.body;
 
-        const newEvent = new Event({
-            matchId,
-            type,
-            playerDorsal,
-            teamId,
-            timestampSeconds,
-            period
-        });
-        const savedEvent = await newEvent.save();
+    // 1. Guardar el evento en el historial
+    const nuevoEvento = new Event(req.body);
+    const eventoGuardado = await nuevoEvento.save();
 
-        // Si es un GOL, actualizar el marcador en la colección Match
-        if (type === 'GOAL') {
-            const scoreField = (teamId === 0) ? 'homeScore' : 'awayScore';
-            await Match.findByIdAndUpdate(matchId, {
-                $inc: { [scoreField]: 1 }
-            });
+    // 2. Si el evento es un gol, modificamos automáticamente el marcador del Match y del Player
+    if (type === 'GOAL' || type === 'GOL') {
+      const numTeamId = Number(teamId);
+      const campoIncremento = numTeamId === 0 ? { homeScore: 1 } : { awayScore: 1 };
+      const partido = await Match.findById(matchId);
+      
+      if (partido) {
+        await Match.findByIdAndUpdate(matchId, { $inc: campoIncremento });
+        
+        const teamRef = numTeamId === 0 ? partido.homeTeamRef : partido.awayTeamRef;
+        const playerDorsal = String(req.body.playerDorsal);
+        
+        console.log(`[GOL] Buscando jugador para actualizar goles. Partido: ${matchId}, teamRef: ${teamRef}, dorsal: "${playerDorsal}", teamId: ${teamId}`);
+        
+        let playerQuery;
+        let insertData = {
+          name: `Jugador #${playerDorsal}`,
+          position: "Jugador",
+          isManualEntry: true
+        };
+
+        if (teamRef) {
+          playerQuery = { teamRef: teamRef, dorsal: String(playerDorsal) };
+        } else {
+          playerQuery = { matchId: matchId, teamId: Number(teamId), dorsal: String(playerDorsal) };
+          insertData.teamId = Number(teamId);
+          insertData.matchId = matchId;
         }
-
-        res.status(201).json(savedEvent);
-    } catch (error) {
-        res.status(500).json({ message: "Error al registrar evento", error });
+        
+        const Player = require('../models/Player');
+        const playerResult = await Player.findOneAndUpdate(
+          playerQuery,
+          { 
+            $inc: { goals: 1 },
+            $setOnInsert: insertData
+          },
+          { returnDocument: 'after', upsert: true }
+        );
+        
+        if (playerResult) {
+          console.log(`[GOL] ÉXITO: Jugador actualizado -> ${playerResult.name} (Goles: ${playerResult.goals})`);
+        } else {
+          console.log(`[GOL] ERROR: Jugador NO ENCONTRADO en BD. Revisa si el dorsal ${playerDorsal} existe en el equipo local/visita.`);
+        }
+      }
     }
+
+    if (req.io) {
+      req.io.emit('match_updated', matchId);
+    }
+
+    res.status(201).json(eventoGuardado);
+  } catch (error) {
+    console.error("[ERROR GRAVE AL REGISTRAR EVENTO]:", error.message);
+    console.error(error);
+    res.status(400).json({ mensaje: 'Error al registrar evento', error: error.message });
+  }
 };
 
 // 2. Obtener historial de eventos de un partido
@@ -55,7 +97,7 @@ exports.updateEvent = async (req, res) => {
         const updatedEvent = await Event.findByIdAndUpdate(
             id,
             { playerDorsal },
-            { new: true }
+            { returnDocument: 'after' }
         );
 
         if (!updatedEvent) return res.status(404).json({ message: "Evento no encontrado" });
