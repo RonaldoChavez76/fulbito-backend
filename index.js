@@ -49,6 +49,8 @@ mongoose.connect(process.env.MONGODB_URI)
   .then(() => console.log('Conectado exitosamente a MongoDB'))
   .catch((error) => console.error('Error conectando a MongoDB:', error));
 
+const leagueRoutes = require('./routes/leagueRoutes');
+
 // Ruta de prueba
 app.get('/', (req, res) => {
   res.send('¡El servidor está funcionando!');
@@ -60,6 +62,7 @@ app.use('/api/events', eventRoutes);
 app.use('/api/teams', teamRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/leagues', leagueRoutes);
 
 // Iniciar servidor
 const PORT = process.env.PORT || 3000;

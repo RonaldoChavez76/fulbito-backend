@@ -8,6 +8,7 @@ const mongoose = require('mongoose');
 const PlayerSchema = new mongoose.Schema({
   matchId: { type: mongoose.Schema.Types.ObjectId, ref: 'Match', required: false },
   teamRef: { type: mongoose.Schema.Types.ObjectId, ref: 'Team', required: false }, // Para jugadores globales del equipo
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: false }, // Referencia al usuario (rol Jugador)
   dorsal: { type: String, required: true },
   name: { type: String, default: "" },
   position: { type: String, default: "Jugador" },

@@ -70,3 +70,29 @@ exports.login = async (req, res) => {
         res.status(500).json({ message: 'Error al iniciar sesión', error: error.message });
     }
 };
+
+// Cambiar contraseña
+exports.changePassword = async (req, res) => {
+    try {
+        const { userId, oldPassword, newPassword } = req.body;
+
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: 'Usuario no encontrado' });
+        }
+
+        const isMatch = await bcrypt.compare(oldPassword, user.password);
+        if (!isMatch) {
+            return res.status(401).json({ message: 'La contraseña actual es incorrecta' });
+        }
+
+        const salt = await bcrypt.genSalt(10);
+        user.password = await bcrypt.hash(newPassword, salt);
+        await user.save();
+
+        res.json({ message: 'Contraseña actualizada exitosamente' });
+    } catch (error) {
+        console.error("Error en changePassword:", error);
+        res.status(500).json({ message: 'Error al cambiar la contraseña', error: error.message });
+    }
+};

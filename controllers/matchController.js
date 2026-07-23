@@ -21,8 +21,13 @@ exports.createMatch = async (req, res) => {
 // Obtener todos los partidos
 exports.getAllMatches = async (req, res) => {
   try {
+    const { leagueId } = req.query;
+    let query = {};
+    if (leagueId) {
+      query.leagueRef = leagueId;
+    }
     // Obtener todos los partidos ordenados por fecha y hora (los más próximos primero)
-    const partidos = await Match.find().sort({ fecha: 1, hora: 1 });
+    const partidos = await Match.find(query).sort({ fecha: 1, hora: 1 });
     res.status(200).json(partidos);
   } catch (error) {
     res.status(500).json({ mensaje: 'Error al obtener partidos', error: error.message });
