@@ -197,10 +197,11 @@ exports.getMyStats = async (req, res) => {
     try {
         const { userId } = req.params;
         
-        // Buscar todas las apariciones del jugador en diferentes partidos
-        const players = await Player.find({ userId });
+        // 1. Buscar el registro del jugador (puede o no tener matchId)
+        //    El registro del equipo (isCaptain o normal) guarda userId y los goles acumulados
+        const playerRecord = await Player.findOne({ userId }).populate('teamRef');
         
-        if (!players || players.length === 0) {
+        if (!playerRecord) {
             return res.json({
                 matchesPlayed: 0,
                 totalGoals: 0,
@@ -210,40 +211,53 @@ exports.getMyStats = async (req, res) => {
             });
         }
 
-        let totalGoals = 0;
-        let yellowCards = 0;
-        let redCards = 0;
-        const history = [];
+        const { dorsal, teamRef, goals } = playerRecord;
+        const teamRefId = teamRef ? (teamRef._id || teamRef) : null;
 
-        for (const p of players) {
-            totalGoals += p.goals;
-
-            // Buscar eventos (tarjetas) para este jugador en este partido
-            const events = await Event.find({ 
-                matchId: p.matchId, 
-                teamId: p.teamId, 
-                playerDorsal: p.dorsal 
+        // 2. Buscar TODOS los eventos relacionados a este jugador (por dorsal y equipo)
+        let eventQuery = { playerDorsal: String(dorsal) };
+        if (teamRefId) {
+            // Buscar los partidos donde el equipo participa, para luego filtrar eventos por matchId
+            const Match = require('../models/Match');
+            const matches = await Match.find({
+                $or: [{ homeTeamRef: teamRefId }, { awayTeamRef: teamRefId }]
             });
+            const matchIds = matches.map(m => m._id);
+            eventQuery.matchId = { $in: matchIds };
+        }
 
-            const matchYellows = events.filter(e => e.type.includes('YELLOW') || e.type.includes('AMARILLA')).length;
-            const matchReds = events.filter(e => e.type.includes('RED') || e.type.includes('ROJA')).length;
+        const allEvents = await Event.find(eventQuery);
 
-            yellowCards += matchYellows;
-            redCards += matchReds;
+        const yellowTypes = ['YELLOW_CARD', 'YELLOW', 'AMARILLA', 'TARJETA_AMARILLA', 'TARJETA AMARILLA'];
+        const redTypes = ['RED_CARD', 'RED', 'ROJA', 'TARJETA_ROJA', 'TARJETA ROJA'];
+        
+        const yellowCards = allEvents.filter(e => yellowTypes.includes(e.type)).length;
+        const redCards = allEvents.filter(e => redTypes.includes(e.type)).length;
 
+        // 3. Contar partidos: agrupando eventos únicos por matchId
+        const uniqueMatchIds = [...new Set(allEvents.map(e => String(e.matchId)))];
+        // Si no hay eventos pero hay goles registrados directamente, al menos cuenta 1 partido
+        const matchesPlayed = uniqueMatchIds.length > 0 ? uniqueMatchIds.length : (goals > 0 ? 1 : 0);
+
+        // 4. Construir historial por partido
+        const history = [];
+        for (const matchId of uniqueMatchIds) {
+            const matchEvents = allEvents.filter(e => String(e.matchId) === matchId);
+            const matchGoals = matchEvents.filter(e => e.type === 'GOAL' || e.type === 'GOL').length;
+            const matchYellows = matchEvents.filter(e => yellowTypes.includes(e.type)).length;
+            const matchReds = matchEvents.filter(e => redTypes.includes(e.type)).length;
             history.push({
-                matchId: p.matchId,
-                teamId: p.teamId,
-                dorsal: p.dorsal,
-                goals: p.goals,
+                matchId,
+                dorsal,
+                goals: matchGoals,
                 yellowCards: matchYellows,
                 redCards: matchReds
             });
         }
 
         res.json({
-            matchesPlayed: players.length,
-            totalGoals,
+            matchesPlayed,
+            totalGoals: goals || 0,
             yellowCards,
             redCards,
             history
@@ -251,5 +265,39 @@ exports.getMyStats = async (req, res) => {
     } catch (error) {
         console.error("Error al obtener mis stats:", error);
         res.status(500).json({ message: "Error al obtener estadísticas", error: error.message });
+    }
+};
+
+// 12. Obtener información de capitán (si aplica)
+exports.getCaptainInfo = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        
+        // Buscar si el usuario es capitán de algún equipo
+        const captainPlayer = await Player.findOne({ userId, isCaptain: true }).populate('teamRef');
+        
+        if (!captainPlayer || !captainPlayer.teamRef) {
+            return res.json({ isCaptain: false });
+        }
+
+        // Obtener los jugadores de su equipo
+        const teamPlayers = await Player.find({ teamRef: captainPlayer.teamRef._id });
+
+        // Obtener próximos partidos de su equipo
+        const Match = require('../models/Match');
+        const upcomingMatches = await Match.find({
+            $or: [{ homeTeamRef: captainPlayer.teamRef._id }, { awayTeamRef: captainPlayer.teamRef._id }],
+            isFinished: false
+        }).sort({ fecha: 1 }).limit(5);
+
+        res.json({
+            isCaptain: true,
+            team: captainPlayer.teamRef,
+            players: teamPlayers,
+            upcomingMatches: upcomingMatches
+        });
+    } catch (error) {
+        console.error("Error al obtener info de capitán:", error);
+        res.status(500).json({ message: "Error al obtener info de capitán", error: error.message });
     }
 };

@@ -12,6 +12,7 @@ router.post('/bulk', playerController.bulkCreatePlayers);
 router.post('/sync-manual', playerController.syncManualPlayer);
 router.get('/top-scorers', playerController.getTopScorers); // Debe ir antes de /:id para no confundir
 router.get('/my-stats/:userId', playerController.getMyStats);
+router.get('/captain-info/:userId', playerController.getCaptainInfo);
 
 // Rutas que requieren parámetros (ID)
 router.get('/', playerController.getAllPlayers);
