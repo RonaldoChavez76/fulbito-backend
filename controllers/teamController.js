@@ -1,8 +1,9 @@
 const Team = require('../models/Team');
+const Player = require('../models/Player');
 
 exports.createTeam = async (req, res) => {
   try {
-    const { name, category, captain, shieldUrl, leagues } = req.body;
+    const { name, category, captain, shieldUrl, leagues, captainDorsal } = req.body;
     const newTeam = new Team({ 
       name, 
       category, 
@@ -10,8 +11,22 @@ exports.createTeam = async (req, res) => {
       shieldUrl, 
       leagues: leagues || [] 
     });
-    await newTeam.save();
-    res.status(201).json(newTeam);
+    const savedTeam = await newTeam.save();
+
+    // Crear el jugador capitán si se proporcionó dorsal
+    if (captainDorsal && captainDorsal.trim() !== '') {
+        const captainPlayer = new Player({
+            teamRef: savedTeam._id,
+            dorsal: captainDorsal,
+            name: captain || "Capitán",
+            position: "Capitán",
+            isCaptain: true,
+            isManualEntry: false
+        });
+        await captainPlayer.save();
+    }
+
+    res.status(201).json(savedTeam);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

@@ -15,7 +15,8 @@ const PlayerSchema = new mongoose.Schema({
   photoUrl: { type: String, default: "" },
   goals: { type: Number, default: 0 },
   teamId: { type: Number, enum: [0, 1], required: false },
-  isManualEntry: { type: Boolean, default: false }
+  isManualEntry: { type: Boolean, default: false },
+  isCaptain: { type: Boolean, default: false }
 });
 
 module.exports = mongoose.models.Player || mongoose.model('Player', PlayerSchema);
