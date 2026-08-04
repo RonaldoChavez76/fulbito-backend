@@ -83,6 +83,16 @@ exports.updateMatchStatus = async (req, res) => {
     
     if (req.io) {
       req.io.emit('match_updated', id);
+      // Si el partido acaba de terminar, emitir evento especial para notificar al admin
+      if (req.body.isFinished === true) {
+        req.io.emit('match_finished', {
+          matchId: id,
+          homeTeam: partidoActualizado.homeTeam,
+          awayTeam: partidoActualizado.awayTeam,
+          homeScore: partidoActualizado.homeScore,
+          awayScore: partidoActualizado.awayScore
+        });
+      }
     }
     
     res.status(200).json(partidoActualizado);
