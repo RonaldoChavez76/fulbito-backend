@@ -67,6 +67,13 @@ exports.registerEvent = async (req, res) => {
 
     if (req.io) {
       req.io.emit('match_updated', matchId);
+      // Evento detallado para notificaciones en la app Android
+      req.io.emit('match_event', {
+        matchId,
+        type,
+        teamId,
+        playerDorsal: req.body.playerDorsal || null
+      });
     }
 
     res.status(201).json(eventoGuardado);
