@@ -6,7 +6,14 @@
 const Event = require('../models/Event');
 const Match = require('../models/Match');
 
-// 1. Registrar un nuevo evento (Gol, Amarilla o Roja)
+/**
+ * Registra un nuevo evento (Gol, Tarjeta Amarilla, Tarjeta Roja) en un partido en curso.
+ * Si el evento es un gol, incrementa el marcador del partido y los goles personales del jugador,
+ * y emite las alertas en tiempo real a los clientes conectados vía Socket.io.
+ * 
+ * @param {Object} req - Petición Express (body: detalles del evento como matchId, type, teamId, playerDorsal)
+ * @param {Object} res - Respuesta Express
+ */
 exports.registerEvent = async (req, res) => {
   try {
     console.log("\n--- NUEVO EVENTO RECIBIDO DESDE EL RELOJ (vía eventController) ---");
@@ -84,7 +91,13 @@ exports.registerEvent = async (req, res) => {
   }
 };
 
-// 2. Obtener historial de eventos de un partido
+/**
+ * Consulta y devuelve el historial cronológico completo de todos los eventos
+ * registrados en un partido específico.
+ * 
+ * @param {Object} req - Petición Express (params: matchId)
+ * @param {Object} res - Respuesta Express
+ */
 exports.getEventsByMatch = async (req, res) => {
     try {
         const { matchId } = req.params;
@@ -95,7 +108,13 @@ exports.getEventsByMatch = async (req, res) => {
     }
 };
 
-// 3. Editar un evento (Corregir dorsal)
+/**
+ * Permite actualizar un evento existente (por ejemplo, corregir el minuto 
+ * o el tipo de sanción si el árbitro se equivocó).
+ * 
+ * @param {Object} req - Petición Express (params: id, body: nuevos datos)
+ * @param {Object} res - Respuesta Express
+ */
 exports.updateEvent = async (req, res) => {
     try {
         const { id } = req.params;

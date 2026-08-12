@@ -8,7 +8,12 @@ const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const Event = require('../models/Event');
 
-// 1. Obtener todos los jugadores de un partido específico
+/**
+ * Busca y devuelve la lista de jugadores vinculados específicamente a un partido manual.
+ * 
+ * @param {Object} req - Petición Express (params: matchId)
+ * @param {Object} res - Respuesta Express
+ */
 exports.getPlayersByMatch = async (req, res) => {
     try {
         const { matchId } = req.params;
@@ -19,7 +24,12 @@ exports.getPlayersByMatch = async (req, res) => {
     }
 };
 
-// 2. Crear un jugador individual
+/**
+ * Registra un nuevo jugador en la base de datos (generalmente desde el panel Admin).
+ * 
+ * @param {Object} req - Petición Express (body: detalles del jugador)
+ * @param {Object} res - Respuesta Express
+ */
 exports.createPlayer = async (req, res) => {
     try {
         const newPlayer = new Player(req.body);
@@ -192,7 +202,15 @@ exports.generateAccount = async (req, res) => {
     }
 };
 
-// 11. Obtener estadísticas propias (Mis Stats)
+/**
+ * Función clave para el perfil del jugador en la App Móvil.
+ * Suma y calcula el rendimiento global del jugador en la liga analizando 
+ * todos los eventos (goles, tarjetas) asociados a su equipo y dorsal, 
+ * y cuenta en cuántos partidos ha participado.
+ * 
+ * @param {Object} req - Petición Express (params: userId)
+ * @param {Object} res - Respuesta Express con el resumen de estadísticas
+ */
 exports.getMyStats = async (req, res) => {
     try {
         const { userId } = req.params;
