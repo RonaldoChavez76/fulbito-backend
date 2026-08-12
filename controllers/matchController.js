@@ -7,7 +7,11 @@ const Match = require('../models/Match');
 const Player = require('../models/Player');
 const Event = require('../models/Event');
 
-// Crear un nuevo partido
+/**
+ * Crea un nuevo partido en la base de datos.
+ * @param {Object} req - Objeto de petición Express (body: detalles del partido)
+ * @param {Object} res - Objeto de respuesta Express
+ */
 exports.createMatch = async (req, res) => {
   try {
     const nuevoPartido = new Match(req.body);
@@ -18,7 +22,12 @@ exports.createMatch = async (req, res) => {
   }
 };
 
-// Obtener todos los partidos
+/**
+ * Obtiene todos los partidos, opcionalmente filtrados por liga.
+ * Ordena los resultados por fecha y hora.
+ * @param {Object} req - Petición Express (query: leagueId)
+ * @param {Object} res - Respuesta Express
+ */
 exports.getAllMatches = async (req, res) => {
   try {
     const { leagueId } = req.query;
@@ -34,7 +43,12 @@ exports.getAllMatches = async (req, res) => {
   }
 };
 
-// Obtener los detalles completos de un partido por su ID
+/**
+ * Obtiene los detalles completos de un partido, combinando la información del partido, 
+ * los jugadores (tanto de la liga como manuales) y los eventos (goles, tarjetas).
+ * @param {Object} req - Petición Express (params: id)
+ * @param {Object} res - Respuesta Express
+ */
 exports.getMatchDetails = async (req, res) => {
   try {
     const { id } = req.params;
@@ -71,7 +85,12 @@ exports.getMatchDetails = async (req, res) => {
   }
 };
 
-// Actualizar el estado global del partido (cronómetro, pausa, periodos)
+/**
+ * Actualiza el estado global de un partido (minuto, periodo, marcadores).
+ * Emite los eventos de Socket.io 'match_updated' y 'match_finished' según corresponda.
+ * @param {Object} req - Petición Express (body: estado a actualizar)
+ * @param {Object} res - Respuesta Express
+ */
 exports.updateMatchStatus = async (req, res) => {
   try {
     const { id } = req.params;
