@@ -1,18 +1,21 @@
 /**
  * Archivo: controllers/eventController.js
- * Descripción: Controlador para la gestión de eventos de partidos,
- *              incluyendo registro, consulta, edición y eliminación.
+ * Descripción: Controlador para la gestión de eventos de partidos (por ejemplo: Goles, Tarjetas, Sustituciones).
+ *              Permite registrar eventos y sincronizar automáticamente el marcador de un partido,
+ *              así como gestionar estadísticas de los jugadores en vivo. Emite los eventos al servidor Socket.io.
  */
+
 const Event = require('../models/Event');
 const Match = require('../models/Match');
 
 /**
- * Registra un nuevo evento (Gol, Tarjeta Amarilla, Tarjeta Roja) en un partido en curso.
- * Si el evento es un gol, incrementa el marcador del partido y los goles personales del jugador,
- * y emite las alertas en tiempo real a los clientes conectados vía Socket.io.
+ * Registra un nuevo evento durante un partido.
+ * Si el evento es un gol ('GOAL' o 'GOL'), incrementa automáticamente el marcador del partido (Match)
+ * y las estadísticas del jugador correspondiente (Player). Emite un evento WebSocket para notificar el cambio.
  * 
- * @param {Object} req - Petición Express (body: detalles del evento como matchId, type, teamId, playerDorsal)
- * @param {Object} res - Respuesta Express
+ * @param {Object} req - Objeto de petición (body incluye matchId, type, teamId, playerDorsal).
+ * @param {Object} res - Objeto de respuesta.
+ * @returns {JSON} El evento guardado en base de datos.
  */
 exports.registerEvent = async (req, res) => {
   try {
@@ -92,11 +95,12 @@ exports.registerEvent = async (req, res) => {
 };
 
 /**
- * Consulta y devuelve el historial cronológico completo de todos los eventos
- * registrados en un partido específico.
+ * Obtiene el historial completo de eventos asociados a un partido específico.
+ * Utilizado por los clientes para reconstruir la cronología del partido.
  * 
- * @param {Object} req - Petición Express (params: matchId)
- * @param {Object} res - Respuesta Express
+ * @param {Object} req - Petición (params: matchId).
+ * @param {Object} res - Respuesta.
+ * @returns {Array} Lista de eventos ordenados por fecha de creación descendente.
  */
 exports.getEventsByMatch = async (req, res) => {
     try {
@@ -109,11 +113,12 @@ exports.getEventsByMatch = async (req, res) => {
 };
 
 /**
- * Permite actualizar un evento existente (por ejemplo, corregir el minuto 
- * o el tipo de sanción si el árbitro se equivocó).
+ * Actualiza la información de un evento existente, específicamente útil para corregir
+ * el dorsal de un jugador asociado a una tarjeta o gol previamente registrado.
  * 
- * @param {Object} req - Petición Express (params: id, body: nuevos datos)
- * @param {Object} res - Respuesta Express
+ * @param {Object} req - Petición (params: id, body: playerDorsal).
+ * @param {Object} res - Respuesta.
+ * @returns {JSON} Evento actualizado.
  */
 exports.updateEvent = async (req, res) => {
     try {
@@ -133,7 +138,15 @@ exports.updateEvent = async (req, res) => {
     }
 };
 
-// 4. Eliminar un evento (Anulación y corrección de marcador)
+/**
+ * Elimina un evento registrado. 
+ * Si el evento eliminado era un gol ('GOAL'), reduce el marcador del partido (Match)
+ * en consecuencia, evitando que el marcador quede por debajo de 0.
+ * 
+ * @param {Object} req - Petición (params: id).
+ * @param {Object} res - Respuesta.
+ * @returns {JSON} Mensaje de confirmación.
+ */
 exports.deleteEvent = async (req, res) => {
     try {
         const { id } = req.params;

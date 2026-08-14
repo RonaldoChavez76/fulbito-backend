@@ -1,16 +1,19 @@
 /**
  * Archivo: controllers/matchController.js
- * Descripción: Controlador para operaciones de partidos,
- *              incluyendo creación, consulta, actualización y registro de eventos.
+ * Descripción: Controlador para operaciones relacionadas con los partidos.
+ *              Incluye la creación, consulta (con información de jugadores y eventos combinada),
+ *              actualización del estado de juego (tiempo, periodos) y eliminación.
  */
 const Match = require('../models/Match');
 const Player = require('../models/Player');
 const Event = require('../models/Event');
 
 /**
- * Crea un nuevo partido en la base de datos.
- * @param {Object} req - Objeto de petición Express (body: detalles del partido)
- * @param {Object} res - Objeto de respuesta Express
+ * Crea un nuevo partido en blanco, inicialmente programado.
+ * 
+ * @param {Object} req - Petición (body con datos del partido).
+ * @param {Object} res - Respuesta.
+ * @returns {JSON} Partido creado.
  */
 exports.createMatch = async (req, res) => {
   try {
@@ -24,9 +27,11 @@ exports.createMatch = async (req, res) => {
 
 /**
  * Obtiene todos los partidos, opcionalmente filtrados por liga.
- * Ordena los resultados por fecha y hora.
- * @param {Object} req - Petición Express (query: leagueId)
- * @param {Object} res - Respuesta Express
+ * Ordena los resultados por fecha y hora ascendente.
+ * 
+ * @param {Object} req - Petición (query opcional: leagueId).
+ * @param {Object} res - Respuesta.
+ * @returns {Array} Lista de partidos encontrados.
  */
 exports.getAllMatches = async (req, res) => {
   try {
@@ -44,10 +49,14 @@ exports.getAllMatches = async (req, res) => {
 };
 
 /**
- * Obtiene los detalles completos de un partido, combinando la información del partido, 
- * los jugadores (tanto de la liga como manuales) y los eventos (goles, tarjetas).
- * @param {Object} req - Petición Express (params: id)
- * @param {Object} res - Respuesta Express
+ * Obtiene los detalles completos de un partido.
+ * Esto no solo devuelve la info del `Match`, sino que también agrupa
+ * a los jugadores locales (teamId: 0) y visitantes (teamId: 1) junto a 
+ * todos los eventos ocurridos en este partido, para enviarlo al Smartwatch o app móvil.
+ * 
+ * @param {Object} req - Petición (params: id).
+ * @param {Object} res - Respuesta.
+ * @returns {JSON} Objeto complejo con { partido, jugadores, eventos }.
  */
 exports.getMatchDetails = async (req, res) => {
   try {
@@ -86,10 +95,13 @@ exports.getMatchDetails = async (req, res) => {
 };
 
 /**
- * Actualiza el estado global de un partido (minuto, periodo, marcadores).
- * Emite los eventos de Socket.io 'match_updated' y 'match_finished' según corresponda.
- * @param {Object} req - Petición Express (body: estado a actualizar)
- * @param {Object} res - Respuesta Express
+ * Actualiza el estado global de un partido (tiempo, periodo actual, pausa).
+ * Tras actualizar la base de datos, emite un evento WebSocket ('match_updated') 
+ * para que el Scoreboard (TV) se sincronice.
+ * 
+ * @param {Object} req - Petición (params: id, body: cambios de estado).
+ * @param {Object} res - Respuesta.
+ * @returns {JSON} Partido actualizado.
  */
 exports.updateMatchStatus = async (req, res) => {
   try {
@@ -120,7 +132,15 @@ exports.updateMatchStatus = async (req, res) => {
   }
 };
 
-// Registrar un suceso histórico (Gol o Tarjeta) y actualizar el marcador de forma inteligente si es GOAL
+/**
+ * Registra un evento de partido (como en eventController).
+ * Este método delega de manera similar el guardado del historial y 
+ * ajusta contadores de goles si corresponde.
+ * 
+ * @param {Object} req - Petición.
+ * @param {Object} res - Respuesta.
+ * @returns {JSON} Evento guardado.
+ */
 exports.registerEvent = async (req, res) => {
   try {
     console.log("\n--- NUEVO EVENTO RECIBIDO DESDE EL RELOJ ---");
@@ -190,7 +210,15 @@ exports.registerEvent = async (req, res) => {
   }
 };
 
-// Eliminar un partido
+/**
+ * Elimina un partido de la base de datos.
+ * Aplica un borrado en cascada (Cascade Delete) de los eventos y
+ * jugadores creados manualmente exclusivamente para este partido.
+ * 
+ * @param {Object} req - Petición (params: id).
+ * @param {Object} res - Respuesta.
+ * @returns {JSON} Mensaje de éxito.
+ */
 exports.deleteMatch = async (req, res) => {
   try {
     const { id } = req.params;

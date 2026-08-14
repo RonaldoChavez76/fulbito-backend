@@ -1,6 +1,20 @@
+/**
+ * Archivo: controllers/teamController.js
+ * Descripción: Controlador encargado de la gestión de equipos de fútbol.
+ *              Incluye endpoints para crear, leer (listar y filtrar por liga), 
+ *              actualizar y eliminar equipos.
+ */
+
 const Team = require('../models/Team');
 const Player = require('../models/Player');
 
+/**
+ * Crea un nuevo equipo en la base de datos.
+ * 
+ * @param {Object} req - Objeto de petición (body: {name, category, captain, shieldUrl, leagues}).
+ * @param {Object} res - Objeto de respuesta.
+ * @returns {JSON} El equipo creado.
+ */
 exports.createTeam = async (req, res) => {
   try {
     const { name, category, captain, shieldUrl, leagues, captainDorsal } = req.body;
@@ -32,6 +46,14 @@ exports.createTeam = async (req, res) => {
   }
 };
 
+/**
+ * Obtiene la lista de equipos registrados. 
+ * Permite filtrar por una liga específica proporcionando el query param `leagueId`.
+ * 
+ * @param {Object} req - Petición (query: { leagueId }).
+ * @param {Object} res - Respuesta.
+ * @returns {Array} Lista de equipos.
+ */
 exports.getTeams = async (req, res) => {
   try {
     const { leagueId } = req.query;
@@ -46,6 +68,13 @@ exports.getTeams = async (req, res) => {
   }
 };
 
+/**
+ * Actualiza la información de un equipo existente.
+ * 
+ * @param {Object} req - Petición (params: id, body con campos a modificar).
+ * @param {Object} res - Respuesta.
+ * @returns {JSON} El equipo modificado.
+ */
 exports.updateTeam = async (req, res) => {
   try {
     const { id } = req.params;
@@ -56,6 +85,13 @@ exports.updateTeam = async (req, res) => {
   }
 };
 
+/**
+ * Elimina permanentemente un equipo de la base de datos.
+ * 
+ * @param {Object} req - Petición (params: id).
+ * @param {Object} res - Respuesta.
+ * @returns {JSON} Mensaje de confirmación.
+ */
 exports.deleteTeam = async (req, res) => {
   try {
     const { id } = req.params;

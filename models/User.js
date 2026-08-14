@@ -1,3 +1,8 @@
+/**
+ * Archivo: models/User.js
+ * Descripción: Esquema de usuarios para la autenticación en el sistema.
+ *              Incluye credenciales básicas y sistema de roles para control de acceso.
+ */
 const mongoose = require('mongoose');
 
 const UserSchema = new mongoose.Schema({
