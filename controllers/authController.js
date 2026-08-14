@@ -1,7 +1,22 @@
+/**
+ * Archivo: controllers/authController.js
+ * Descripción: Controlador que gestiona la autenticación de usuarios. 
+ *              Incluye funciones para el registro, inicio de sesión y cambio de contraseñas, 
+ *              utilizando bcryptjs para el cifrado seguro de contraseñas.
+ */
+
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 
-// Registrar un nuevo usuario
+/**
+ * Registra un nuevo usuario en el sistema.
+ * Verifica que el nombre de usuario no esté en uso, hashea la contraseña proporcionada 
+ * y guarda el nuevo documento en la base de datos MongoDB.
+ * 
+ * @param {Object} req - Objeto de petición Express (body: {username, password, role}).
+ * @param {Object} res - Objeto de respuesta Express.
+ * @returns {JSON} Retorna el usuario guardado o un mensaje de error.
+ */
 exports.register = async (req, res) => {
     try {
         const { username, password, role } = req.body;
@@ -39,7 +54,15 @@ exports.register = async (req, res) => {
     }
 };
 
-// Iniciar sesión
+/**
+ * Inicia la sesión de un usuario existente.
+ * Valida la existencia del nombre de usuario y comprueba que la contraseña
+ * coincida con el hash guardado usando bcrypt.
+ * 
+ * @param {Object} req - Objeto de petición Express (body: {username, password}).
+ * @param {Object} res - Objeto de respuesta Express.
+ * @returns {JSON} Información básica del usuario logueado o error de credenciales.
+ */
 exports.login = async (req, res) => {
     try {
         const { username, password } = req.body;
@@ -71,7 +94,15 @@ exports.login = async (req, res) => {
     }
 };
 
-// Cambiar contraseña
+/**
+ * Permite a un usuario cambiar su contraseña actual.
+ * Requiere enviar la contraseña antigua para validación antes de 
+ * establecer y hashear la nueva contraseña.
+ * 
+ * @param {Object} req - Objeto de petición Express (body: {userId, oldPassword, newPassword}).
+ * @param {Object} res - Objeto de respuesta Express.
+ * @returns {JSON} Mensaje de éxito o error en la validación.
+ */
 exports.changePassword = async (req, res) => {
     try {
         const { userId, oldPassword, newPassword } = req.body;

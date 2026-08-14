@@ -1,5 +1,18 @@
+/**
+ * Archivo: controllers/leagueController.js
+ * Descripción: Controlador para la gestión de las ligas de fútbol (Fulbito).
+ *              Permite listar, consultar detalles, crear, actualizar y eliminar ligas.
+ */
+
 const League = require('../models/League');
 
+/**
+ * Obtiene todas las ligas registradas en el sistema.
+ * 
+ * @param {Object} req - Objeto de petición.
+ * @param {Object} res - Objeto de respuesta.
+ * @returns {Array} Lista completa de ligas.
+ */
 exports.getLeagues = async (req, res) => {
   try {
     const leagues = await League.find();
@@ -9,6 +22,13 @@ exports.getLeagues = async (req, res) => {
   }
 };
 
+/**
+ * Obtiene los detalles de una liga específica por su ID.
+ * 
+ * @param {Object} req - Petición (params: id).
+ * @param {Object} res - Respuesta.
+ * @returns {JSON} Objeto de la liga encontrada o un 404 si no existe.
+ */
 exports.getLeagueById = async (req, res) => {
   try {
     const league = await League.findById(req.params.id);
@@ -19,6 +39,13 @@ exports.getLeagueById = async (req, res) => {
   }
 };
 
+/**
+ * Crea una nueva liga.
+ * 
+ * @param {Object} req - Petición (body: {name, description, logoUrl}).
+ * @param {Object} res - Respuesta.
+ * @returns {JSON} Liga recién creada.
+ */
 exports.createLeague = async (req, res) => {
   try {
     const { name, description, logoUrl } = req.body;
@@ -30,6 +57,13 @@ exports.createLeague = async (req, res) => {
   }
 };
 
+/**
+ * Actualiza los datos principales de una liga existente.
+ * 
+ * @param {Object} req - Petición (params: id, body: {name, description, logoUrl}).
+ * @param {Object} res - Respuesta.
+ * @returns {JSON} Liga actualizada.
+ */
 exports.updateLeague = async (req, res) => {
   try {
     const { name, description, logoUrl } = req.body;
@@ -44,6 +78,13 @@ exports.updateLeague = async (req, res) => {
   }
 };
 
+/**
+ * Elimina una liga de la base de datos de manera permanente.
+ * 
+ * @param {Object} req - Petición (params: id).
+ * @param {Object} res - Respuesta.
+ * @returns {JSON} Mensaje de éxito.
+ */
 exports.deleteLeague = async (req, res) => {
   try {
     await League.findByIdAndDelete(req.params.id);

@@ -1,7 +1,8 @@
 /**
  * Archivo: controllers/playerController.js
- * Descripción: Controlador para operaciones de jugadores,
- *              como listado por partido, creación, actualización y eliminación.
+ * Descripción: Controlador para la gestión integral de jugadores.
+ *              Maneja la creación individual y masiva, sincronización de estadísticas en vivo
+ *              (goles y tarjetas), cálculos de tablas de goleo y generación de cuentas de usuario.
  */
 const Player = require('../models/Player');
 const User = require('../models/User');
@@ -9,10 +10,11 @@ const bcrypt = require('bcryptjs');
 const Event = require('../models/Event');
 
 /**
- * Busca y devuelve la lista de jugadores vinculados específicamente a un partido manual.
+ * Obtiene todos los jugadores vinculados a un partido específico.
  * 
- * @param {Object} req - Petición Express (params: matchId)
- * @param {Object} res - Respuesta Express
+ * @param {Object} req - Petición (params: matchId).
+ * @param {Object} res - Respuesta.
+ * @returns {Array} Lista de jugadores.
  */
 exports.getPlayersByMatch = async (req, res) => {
     try {
@@ -25,10 +27,11 @@ exports.getPlayersByMatch = async (req, res) => {
 };
 
 /**
- * Registra un nuevo jugador en la base de datos (generalmente desde el panel Admin).
+ * Crea un jugador de forma individual.
  * 
- * @param {Object} req - Petición Express (body: detalles del jugador)
- * @param {Object} res - Respuesta Express
+ * @param {Object} req - Petición (body con datos del jugador).
+ * @param {Object} res - Respuesta.
+ * @returns {JSON} Jugador creado.
  */
 exports.createPlayer = async (req, res) => {
     try {
@@ -40,7 +43,14 @@ exports.createPlayer = async (req, res) => {
     }
 };
 
-// 3. Registro masivo de jugadores (Cargar alineaciones)
+/**
+ * Permite cargar una lista entera de jugadores de forma simultánea.
+ * Útil para registrar alineaciones completas rápidamente.
+ * 
+ * @param {Object} req - Petición (body: { players: [...] }).
+ * @param {Object} res - Respuesta.
+ * @returns {Array} Lista de jugadores insertados.
+ */
 exports.bulkCreatePlayers = async (req, res) => {
     try {
         const { players } = req.body; 
@@ -51,7 +61,15 @@ exports.bulkCreatePlayers = async (req, res) => {
     }
 };
 
-// 4. Lógica de "Dorsal Manual" (Upsert)
+/**
+ * Lógica de Upsert (Actualizar o Insertar) para un jugador basado en su dorsal.
+ * Utilizado por el reloj (Wear OS) para registrar acciones a jugadores que 
+ * quizá no estaban registrados previamente en la base de datos (jugadores "anónimos").
+ * 
+ * @param {Object} req - Petición (body: matchId, dorsal, teamId).
+ * @param {Object} res - Respuesta.
+ * @returns {JSON} Jugador sincronizado.
+ */
 exports.syncManualPlayer = async (req, res) => {
     try {
         const { matchId, dorsal, teamId } = req.body;
@@ -75,7 +93,14 @@ exports.syncManualPlayer = async (req, res) => {
     }
 };
 
-// 5. Actualizar datos de un jugador
+/**
+ * Actualiza los datos de un jugador (nombre, dorsal, goles, foto).
+ * Maneja lógicamente campos permitidos para evitar modificaciones indebidas.
+ * 
+ * @param {Object} req - Petición (params: id, body con campos a actualizar).
+ * @param {Object} res - Respuesta.
+ * @returns {JSON} Jugador actualizado.
+ */
 exports.updatePlayer = async (req, res) => {
     try {
         // Construir el objeto de actualización solo con los campos enviados (no borrar photoUrl si no viene)
@@ -100,7 +125,13 @@ exports.updatePlayer = async (req, res) => {
     }
 };
 
-// 6. Eliminar un jugador
+/**
+ * Elimina a un jugador del sistema.
+ * 
+ * @param {Object} req - Petición (params: id).
+ * @param {Object} res - Respuesta.
+ * @returns {JSON} Mensaje de éxito.
+ */
 exports.deletePlayer = async (req, res) => {
     try {
         await Player.findByIdAndDelete(req.params.id);
@@ -110,7 +141,13 @@ exports.deletePlayer = async (req, res) => {
     }
 };
 
-// 7. Obtener todos los jugadores (Para Admin)
+/**
+ * Obtiene absolutamente todos los jugadores (usado en paneles de administración global).
+ * 
+ * @param {Object} req - Petición.
+ * @param {Object} res - Respuesta.
+ * @returns {Array} Lista completa de jugadores.
+ */
 exports.getAllPlayers = async (req, res) => {
     try {
         const players = await Player.find();
@@ -120,7 +157,13 @@ exports.getAllPlayers = async (req, res) => {
     }
 };
 
-// 8. Obtener jugadores por equipo
+/**
+ * Obtiene los jugadores asociados a un equipo en particular (a través de teamRef).
+ * 
+ * @param {Object} req - Petición (params: teamRef).
+ * @param {Object} res - Respuesta.
+ * @returns {Array} Lista de jugadores del equipo.
+ */
 exports.getPlayersByTeam = async (req, res) => {
     try {
         const { teamRef } = req.params;
@@ -131,7 +174,14 @@ exports.getPlayersByTeam = async (req, res) => {
     }
 };
 
-// 9. Tabla de goleo (Real)
+/**
+ * Obtiene el "Top 10" de goleadores globales en todo el sistema.
+ * Solo incluye jugadores con más de 0 goles y formatea la respuesta para la UI.
+ * 
+ * @param {Object} req - Petición.
+ * @param {Object} res - Respuesta.
+ * @returns {Array} Top de goleadores.
+ */
 exports.getTopScorers = async (req, res) => {
     try {
         const topPlayers = await Player.find({ goals: { $gt: 0 } })
@@ -156,7 +206,15 @@ exports.getTopScorers = async (req, res) => {
     }
 };
 
-// 10. Generar cuenta de usuario para un jugador (Admin/Capitán)
+/**
+ * Genera una cuenta de usuario ('User') ligada a un 'Player' existente.
+ * Esto permite que un jugador pueda hacer login en la app para ver sus estadísticas.
+ * Genera credenciales aleatorias seguras y las devuelve (por única vez).
+ * 
+ * @param {Object} req - Petición (params: id).
+ * @param {Object} res - Respuesta.
+ * @returns {JSON} Credenciales generadas temporales.
+ */
 exports.generateAccount = async (req, res) => {
     try {
         const { id } = req.params;
@@ -203,13 +261,12 @@ exports.generateAccount = async (req, res) => {
 };
 
 /**
- * Función clave para el perfil del jugador en la App Móvil.
- * Suma y calcula el rendimiento global del jugador en la liga analizando 
- * todos los eventos (goles, tarjetas) asociados a su equipo y dorsal, 
- * y cuenta en cuántos partidos ha participado.
+ * Obtiene el historial y estadísticas consolidadas (goles, partidos jugados, tarjetas)
+ * de un jugador en particular, cruzando la información de 'Players' y 'Events'.
  * 
- * @param {Object} req - Petición Express (params: userId)
- * @param {Object} res - Respuesta Express con el resumen de estadísticas
+ * @param {Object} req - Petición (params: userId).
+ * @param {Object} res - Respuesta.
+ * @returns {JSON} Estadísticas personales consolidadas.
  */
 exports.getMyStats = async (req, res) => {
     try {

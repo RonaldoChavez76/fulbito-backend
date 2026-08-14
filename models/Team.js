@@ -1,3 +1,9 @@
+/**
+ * Archivo: models/Team.js
+ * Descripción: Define el esquema de equipos en la base de datos.
+ *              Guarda nombre, categoría, capitán, escudo e incluye
+ *              un arreglo de referencias a las ligas en las que participa.
+ */
 const mongoose = require('mongoose');
 
 const TeamSchema = new mongoose.Schema({
